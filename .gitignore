@@ -9,3 +9,5 @@ target/
 # Ignore Vector Database storage and raw datasets
 chroma_db/
 data/
+
+.env
