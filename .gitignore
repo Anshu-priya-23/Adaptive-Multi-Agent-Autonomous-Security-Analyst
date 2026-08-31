@@ -1,0 +1,11 @@
+# Ignore Python virtual environments
+venv/
+__pycache__/
+
+# Ignore Java build files
+target/
+*.class
+
+# Ignore Vector Database storage and raw datasets
+chroma_db/
+data/
