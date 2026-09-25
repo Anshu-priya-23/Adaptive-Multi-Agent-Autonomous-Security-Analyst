@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SOAR Security Operations Dashboard</title>
+    <!-- Tailwind CSS for modern styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-950 text-slate-100 font-sans min-h-screen p-8">
+
+    <div class="max-w-4xl mx-auto">
+        <!-- Header -->
+        <header class="mb-8 border-b border-slate-800 pb-4 flex justify-between items-center">
+            <div>
+                <h1 class="text-2xl font-bold tracking-wider text-cyan-400">SOC // AI ORCHESTRATOR</h1>
+                <p class="text-sm text-slate-400">Autonomous Threat Detection & Response Dashboard</p>
+            </div>
+            <span class="px-3 py-1 bg-emerald-950 text-emerald-400 border border-emerald-800 rounded-full text-xs font-semibold animate-pulse">
+                API Gateway: Online (7070)
+            </span>
+        </header>
+
+        <!-- Log Ingestion Panel -->
+        <div class="bg-slate-900 border border-slate-800 rounded-xl p-6 mb-8 shadow-xl">
+            <label class="block text-sm font-medium text-slate-300 mb-2">Ingest Custom Security Logs (CSV/TXT)</label>
+            <div class="flex gap-4">
+                <input type="file" id="logFileInput" accept=".csv, .txt, .log" 
+                    class="bg-slate-950 border border-slate-700 rounded-lg px-4 py-2 text-slate-100 focus:outline-none focus:border-cyan-500 flex-1 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-cyan-900 file:text-cyan-400 hover:file:bg-cyan-800">
+                <button onclick="uploadLogs()" id="uploadBtn"
+                    class="bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold px-6 py-2 rounded-lg transition-all shadow-lg shadow-emerald-900/50">
+                    Upload & Store
+                </button>
+            </div>
+            <p id="uploadStatus" class="text-sm mt-3 hidden"></p>
+        </div>
+
+        <!-- Control Panel -->
+        <div class="bg-slate-900 border border-slate-800 rounded-xl p-6 mb-8 shadow-xl">
+            <label class="block text-sm font-medium text-slate-300 mb-2">Target Suspicious IP Address</label>
+            <div class="flex gap-4">
+                <input type="text" id="ipInput" value="192.168.1.10" 
+                    class="bg-slate-950 border border-slate-700 rounded-lg px-4 py-2 text-slate-100 focus:outline-none focus:border-cyan-500 flex-1">
+                <button onclick="triggerAnalysis()" id="analyzeBtn"
+                    class="bg-cyan-600 hover:bg-cyan-500 text-slate-950 font-bold px-6 py-2 rounded-lg transition-all shadow-lg shadow-cyan-900/50">
+                    Analyze Threat
+                </button>
+            </div>
+        </div>
+
+        <!-- Loading State -->
+        <div id="loader" class="hidden text-center py-12">
+            <div class="inline-block animate-spin rounded-full h-8 w-8 border-4 border-cyan-500 border-t-transparent"></div>
+            <p class="text-slate-400 mt-3 text-sm">Querying ChromaDB Vector RAG & Generating AI Report...</p>
+        </div>
+
+        <!-- Results Display Panel -->
+        <div id="resultsPanel" class="hidden space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Confidence Score Card -->
+                <div class="bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-lg">
+                    <h3 class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">AI Confidence</h3>
+                    <div class="flex items-center gap-2">
+                        <span id="confidenceScore" class="text-2xl font-bold text-slate-200">--</span>
+                        <span class="text-sm text-slate-500">/ 100</span>
+                    </div>
+                </div>
+                <!-- Attack Type Card -->
+                <div class="bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-lg">
+                    <h3 class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Suspected Attack Type</h3>
+                    <p id="attackType" class="text-lg font-medium text-slate-200"></p>
+                </div>
+                <!-- Severity Level Card -->
+                <div class="bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-lg">
+                    <h3 class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Severity Level</h3>
+                    <span id="severityLevel" class="inline-block px-3 py-1 rounded-md text-sm font-bold"></span>
+                </div>
+            </div>
+
+            <!-- Mitigation Recommendation Card -->
+            <div class="bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-lg">
+                <h3 class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Mitigation Recommendation</h3>
+                <p id="mitigation" class="text-slate-300 leading-relaxed bg-slate-950 p-4 rounded-lg border border-slate-800/60"></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Frontend Controller Script -->
+    <script>
+        async function uploadLogs() {
+            const fileInput = document.getElementById('logFileInput');
+            const status = document.getElementById('uploadStatus');
+            const btn = document.getElementById('uploadBtn');
+
+            if (!fileInput.files[0]) return alert('Please select a file first.');
+
+            const formData = new FormData();
+            formData.append('logFile', fileInput.files[0]);
+
+            status.classList.remove('hidden');
+            status.innerText = "Uploading to API Gateway...";
+            status.className = "text-sm mt-3 text-amber-400";
+            btn.disabled = true;
+
+            try {
+                const response = await fetch('http://localhost:7070/api/upload-logs', {
+                    method: 'POST',
+                    body: formData // No Content-Type header needed; fetch sets it automatically for FormData
+                });
+                const data = await response.json();
+                
+                if (response.ok) {
+                    status.innerText = "Success: " + data.message;
+                    status.className = "text-sm mt-3 text-emerald-400";
+                } else {
+                    throw new Error(data.error);
+                }
+            } catch (error) {
+                status.innerText = "Upload failed: " + error.message;
+                status.className = "text-sm mt-3 text-red-400";
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        async function triggerAnalysis() {
+            const ip = document.getElementById('ipInput').value;
+            const loader = document.getElementById('loader');
+            const panel = document.getElementById('resultsPanel');
+            const btn = document.getElementById('analyzeBtn');
+
+            if (!ip) return alert('Please enter an IP address');
+
+            // UI Loading state
+            loader.classList.remove('hidden');
+            panel.classList.add('hidden');
+            btn.disabled = true;
+
+            try {
+                const response = await fetch('http://localhost:7070/api/analyze', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ip: ip })
+                });
+
+                if (!response.ok) throw new Error('Gateway response failed');
+
+                const data = await response.json();
+
+                // Populate UI fields
+                document.getElementById('attackType').innerText = data.attack_type || 'Unknown';
+                
+                const severityBadge = document.getElementById('severityLevel');
+                const severity = data.severity_level || 'Medium';
+                severityBadge.innerText = severity;
+                
+                // Color-code severity badges
+                severityBadge.className = "inline-block px-3 py-1 rounded-md text-sm font-bold ";
+                if (severity.toLowerCase().includes('high') || severity.toLowerCase().includes('critical')) {
+                    severityBadge.classList.add('bg-red-950', 'text-red-400', 'border', 'border-red-800');
+                } else if (severity.toLowerCase().includes('medium')) {
+                    severityBadge.classList.add('bg-amber-950', 'text-amber-400', 'border', 'border-amber-800');
+                } else {
+                    severityBadge.classList.add('bg-emerald-950', 'text-emerald-400', 'border', 'border-emerald-800');
+                }
+
+                document.getElementById('confidenceScore').innerText = data.confidence_score || 'N/A';
+
+                document.getElementById('mitigation').innerText = data.mitigation_recommendation || 'No recommendation provided.';
+
+                panel.classList.remove('hidden');
+            } catch (error) {
+                alert('Error connecting to Javalin API Gateway. Make sure the Java server is running on port 7070.');
+                console.error(error);
+            } finally {
+                loader.classList.add('hidden');
+                btn.disabled = false;
+            }
+        }
+        // NEW: Real-time WebSocket connection to the SIEM alerts
+const ws = new WebSocket("ws://localhost:7070/ws/alerts");
+
+    ws.onopen = function() {
+        console.log("🟢 SUCCESS: Connected to SOAR WebSocket.");
+    };
+
+    ws.onmessage = function(event) {
+    console.log("⚡ SIEM ALERT RECEIVED:", event.data);
+    
+    try {
+        const data = JSON.parse(event.data);
+
+        // 1. Target IP
+        const ipInput = document.getElementById('ui-target-ip');
+        if (ipInput) ipInput.value = data.target_ip || "Unknown IP";
+
+        // 2. Confidence Score
+        const scoreEl = document.getElementById('confidenceScore');
+        if (scoreEl) {
+            scoreEl.innerText = data.confidence_score || 'N/A';
+            scoreEl.classList.add("text-red-400"); 
+        }
+
+        // 3. Attack Type
+        const attackTypeEl = document.getElementById('ui-attack-type');
+        if (attackTypeEl) attackTypeEl.innerText = data.attack_type || 'Unknown';
+
+        // 4. Mitigation Recommendation
+        const mitigationEl = document.getElementById('ui-mitigation');
+        if (mitigationEl) mitigationEl.innerText = data.mitigation_recommendation || 'No recommendation provided.';
+
+        // 5. Severity Badge
+        const badgeEl = document.getElementById('ui-severity-badge');
+        if (badgeEl) {
+            badgeEl.innerText = data.severity_level || 'Unknown';
+            badgeEl.className = "px-3 py-1 rounded text-sm font-semibold border"; // Reset baseline classes
+            
+            if (data.severity_level === 'Critical' || data.severity_level === 'High') {
+                badgeEl.className += " bg-red-900/50 text-red-400 border-red-700";
+            } else if (data.severity_level === 'Medium') {
+                badgeEl.className += " bg-amber-900/50 text-amber-400 border-amber-700";
+            } else {
+                badgeEl.className += " bg-emerald-900/50 text-emerald-400 border-emerald-700";
+            }
+        }
+
+    } catch (e) {
+        console.error("❌ Failed to apply UI updates:", e);
+    }
+}; 
+    
+    </script>
+</body>
+</html>

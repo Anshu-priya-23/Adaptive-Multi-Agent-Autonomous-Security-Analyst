@@ -1,0 +1,10 @@
+timestamp,source_ip,destination_ip,port,protocol,event_type,description
+2026-09-25T10:00:01Z,192.168.1.45,10.0.0.5,443,HTTPS,Normal_Traffic,Standard web request
+2026-09-25T10:01:15Z,192.168.1.10,10.0.0.5,22,SSH,Failed_Login,Invalid user 'admin' from 192.168.1.10
+2026-09-25T10:01:17Z,192.168.1.10,10.0.0.5,22,SSH,Failed_Login,Invalid user 'root' from 192.168.1.10
+2026-09-25T10:01:19Z,192.168.1.10,10.0.0.5,22,SSH,Failed_Login,Invalid user 'sysadmin' from 192.168.1.10
+2026-09-25T10:01:21Z,192.168.1.10,10.0.0.5,22,SSH,Failed_Login,Too many authentication failures
+2026-09-25T10:01:25Z,192.168.1.10,10.0.0.5,22,SSH,Successful_Login,Accepted password for root from 192.168.1.10
+2026-09-25T10:02:00Z,192.168.1.10,10.0.0.5,3306,MySQL,Data_Access,Large volume database dump initiated
+2026-09-25T10:02:45Z,192.168.1.10,10.0.0.5,443,HTTPS,Data_Exfiltration,Outbound transfer of 500MB to 192.168.1.10
+2026-09-25T10:05:00Z,192.168.1.50,10.0.0.5,80,HTTP,Normal_Traffic,GET /index.html

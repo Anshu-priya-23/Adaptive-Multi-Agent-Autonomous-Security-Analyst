@@ -1,25 +1,25 @@
-import chromadb
 import sys
-import os
+import chromadb
 
-def search_logs(ip_address):
-    # Connect to the Vector Database
-    db_path = os.path.join(os.path.dirname(__file__), "..", "..", "chroma_db")
-    client = chromadb.PersistentClient(path=db_path)
-    collection = client.get_collection(name="security_logs")
-    
-    # Retrieve historical evidence
+if len(sys.argv) < 2:
+    sys.exit(1)
+
+ip_address = sys.argv[1]
+# If Java asks for more logs (expanded search), use that limit, otherwise default to 5
+limit = int(sys.argv[2]) if len(sys.argv) > 2 else 5
+
+try:
+    chroma_client = chromadb.PersistentClient(path="./chroma_db")
+    collection = chroma_client.get_collection(name="network_logs")
+
+    # Vector similarity search for the IP
     results = collection.query(
         query_texts=[ip_address],
-        n_results=2
+        n_results=limit
     )
-    
-    if results['documents'] and len(results['documents'][0]) > 0:
+
+    if results and results['documents']:
         for doc in results['documents'][0]:
             print(f"EVIDENCE: {doc}")
-    else:
-        print("No historical data found for this IP.")
-
-if __name__ == "__main__":
-    if len(sys.argv) >= 2:
-        search_logs(sys.argv[1])
+except Exception as e:
+    print(f"Error querying ChromaDB: {str(e)}")
