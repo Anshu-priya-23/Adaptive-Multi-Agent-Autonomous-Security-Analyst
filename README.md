@@ -25,26 +25,24 @@ An enterprise-grade, event-driven SOAR (Security Orchestration, Automation, and 
 ### 1. Clone & Configure
 Clone the repository and set up your environment variables to authenticate with Groq. Ensure your `.env` file is excluded from version control.
 
-```bash
 git clone [https://github.com/Anshu-priya-23/Adaptive-Multi-Agent-Autonomous-Security-Analyst.git](https://github.com/Anshu-priya-23/Adaptive-Multi-Agent-Autonomous-Security-Analyst.git)
 cd Adaptive-Multi-Agent-Autonomous-Security-Analyst
 echo "GROQ_API_KEY=your_groq_key_here" > .env
-2. Launch the Java Orchestrator
+
+### 2. Launch the Java Orchestrator
 Compile and start the Java server. This initializes both the SIEM listener endpoint (/api/analyze) and the WebSocket broadcaster (/ws/alerts).
 
-Bash
 mvn clean compile
 mvn exec:java "-Dexec.mainClass=orchestrator.ThreatManager"
-3. Serve the Frontend Dashboard
+
+### 3. Serve the Frontend Dashboard
 To bypass browser security restrictions on local files (file:///), serve the dashboard using a local HTTP server. Open a new terminal window:
 
-Bash
 cd frontend
 python -m http.server 8000
 Navigate to http://localhost:8000 in your web browser and ensure the console reports a successful WebSocket connection.
 
-4. Trigger the SIEM Emulator
+### 4. Trigger the SIEM Emulator
 With the backend orchestrator running and the dashboard active, fire the mock SIEM script to simulate a network attack. The AI will analyze the payload and the UI will update instantly.
 
-Bash
 python src/python/mock_siem.py
